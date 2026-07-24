@@ -17,7 +17,7 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Real recommenders like Spotify and YouTube learn what you like by watching what you play, save, and skip, then mixing a few signals together: what similar listeners enjoy, what a song actually sounds like, and how people describe it. My version is a much smaller, simpler take on the same idea. Instead of learning from millions of users, it compares each song directly against a user's stated taste and prioritizes the most obvious matches first. Genre and mood come first, then how close the song's energy is to what the user wants, with acoustic-ness as a tie-breaker. The goal isn't to be clever. It's to be predictable and easy to explain, so you can always see why a song was recommended.
 
 Some prompts to answer:
 
