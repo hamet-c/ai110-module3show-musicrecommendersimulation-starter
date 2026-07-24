@@ -12,19 +12,27 @@ You will implement the functions in recommender.py:
 from recommender import load_songs, recommend_songs
 
 
-def main() -> None:
-    songs = load_songs("data/songs.csv") 
+# Profiles we test the recommender against.
+# The first three are normal "personas"; the last two are adversarial
+# edge cases with conflicting or catalog-missing preferences.
+PROFILES = {
+    "High-Energy Pop":   {"genre": "pop",     "mood": "happy",   "energy": 0.9},
+    "Chill Lofi":        {"genre": "lofi",    "mood": "chill",   "energy": 0.35},
+    "Deep Intense Rock": {"genre": "rock",    "mood": "intense", "energy": 0.9},
+    # Adversarial: high energy but a sad mood (should not coexist in real music).
+    "Conflicting (loud + sad)": {"genre": "pop", "mood": "sad", "energy": 0.95},
+    # Adversarial: a genre/mood combo that appears in ZERO catalog songs.
+    "Impossible (metal + relaxed)": {"genre": "metal", "mood": "relaxed", "energy": 0.5},
+}
 
-    # Starter example profile
-    user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8}
 
-    recommendations = recommend_songs(user_prefs, songs, k=5)
-
+def print_recommendations(name: str, user_prefs: dict, recommendations: list) -> None:
+    """Print one profile's top picks in a clean terminal layout."""
     print()
-    print("=" * 44)
-    print(f"  Top {len(recommendations)} picks for you")
+    print("=" * 52)
+    print(f"  {name}")
     print(f"  genre={user_prefs['genre']}  mood={user_prefs['mood']}  energy={user_prefs['energy']}")
-    print("=" * 44)
+    print("=" * 52)
 
     for rank, (song, score, explanation) in enumerate(recommendations, start=1):
         print()
@@ -33,6 +41,14 @@ def main() -> None:
         print(f"     why:   {explanation}")
 
     print()
+
+
+def main() -> None:
+    songs = load_songs("data/songs.csv")
+
+    for name, user_prefs in PROFILES.items():
+        recommendations = recommend_songs(user_prefs, songs, k=5)
+        print_recommendations(name, user_prefs, recommendations)
 
 
 if __name__ == "__main__":

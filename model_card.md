@@ -2,110 +2,148 @@
 
 ## 1. Model Name  
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+**VibeFinder 1.0**
+
+A tiny music recommender that matches songs to your vibe.
 
 ---
 
 ## 2. Intended Use  
 
-Describe what your recommender is designed to do and who it is for. 
+VibeFinder suggests songs from a small catalog based on a user's taste.
 
-Prompts:  
+You give it a favorite genre, a mood, and how much energy you want. It hands back the top 5 songs that fit, plus a short reason for each one. It assumes the user can describe their taste in those simple terms.
 
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+This is a classroom project for learning how recommenders work. It is not built for real users or a real music app.
 
 ---
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+Think of it like a judge giving each song points.
 
-Prompts:  
+A song earns 2 points if its genre matches what you asked for. It earns 1 point if the mood matches. It earns up to 1 more point for having energy close to what you want, so a perfect energy match is worth a full point and a far-off one is worth almost nothing. There is also a small half-point for matching whether you like acoustic music.
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
-
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+Every song gets scored this way. Then the list is sorted from highest score to lowest, and the top 5 come back. The main change I made from the starter code was writing the actual scoring rule and turning the weights into settings I could easily change for experiments.
 
 ---
 
 ## 4. Data  
 
-Describe the dataset the model uses.  
+The catalog has 18 songs. I started with 10 and used AI to help me generate 8 more so there was more variety to test with.
 
-Prompts:  
+Each song has a genre, a mood, and number features from 0 to 1 for energy, valence, danceability, and acousticness, plus a tempo. There are around 15 genres (pop, lofi, rock, jazz, metal, reggae, and more) and many moods.
 
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+The dataset is very small, so most genres only have one or two songs. It also has nothing about lyrics, language, artist popularity, or how songs actually sound to a person, so a lot of real musical taste is missing.
 
 ---
 
 ## 5. Strengths  
 
-Where does your system seem to work well  
+The system works best when a user's taste lines up with songs that exist in the catalog.
 
-Prompts:  
-
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+For clear profiles like "chill lofi" or "high-energy pop," the top picks feel right. The genre, mood, and energy all point the same way and the obvious song wins. The energy score also does a good job separating loud songs from calm ones, so opposite profiles get genuinely different lists. And every recommendation comes with a reason, which makes it easy to see why a song showed up.
 
 ---
 
 ## 6. Limitations and Bias 
 
-Where the system struggles or behaves unfairly. 
-
-Prompts:  
-
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+The biggest weakness I found is that the system leans too hard on exact genre and mood matches. Because genre is worth 2.0 points and mood 1.0, but energy can only ever add up to 1.0, a song that shares your genre almost always beats a song that only matches your energy or mood, even when the energy match is much better. This creates a filter bubble: once a genre matches, the recommender stops caring how well the rest of the song fits you. It also punishes users whose taste crosses genre lines, since a "rock" fan gets zero credit for a metal or punk track that a real listener would probably enjoy. Underrepresented genres suffer too. When a user picks a genre with only one matching song (like metal), the entire ranking below that one song is decided by the energy number alone, which is a much weaker signal. Finally, the scoring only reads exact string matches, so a mood like "sad" that does not exist in the catalog silently contributes nothing rather than being handled.
 
 ---
 
 ## 7. Evaluation  
 
-How you checked whether the recommender behaved as expected. 
+### Profiles tested
 
-Prompts:  
+I tested five profiles: three normal personas and two adversarial edge cases designed to try to trick the scorer.
 
-- Which user profiles you tested  
-- What you looked for in the recommendations  
-- What surprised you  
-- Any simple tests or comparisons you ran  
+- **High-Energy Pop** (`genre=pop, mood=happy, energy=0.9`)
+- **Chill Lofi** (`genre=lofi, mood=chill, energy=0.35`)
+- **Deep Intense Rock** (`genre=rock, mood=intense, energy=0.9`)
+- **Conflicting (loud + sad)** (`genre=pop, mood=sad, energy=0.95`) - an energy/mood combo that rarely exists in real music
+- **Impossible (metal + relaxed)** (`genre=metal, mood=relaxed, energy=0.5`) - a genre/mood pairing with zero matching songs in the catalog
 
-No need for numeric metrics unless you created some.
+### Output
+
+```
+====================================================
+  High-Energy Pop   (genre=pop mood=happy energy=0.9)
+====================================================
+  1. Sunrise City - Neon Echo        score: 3.92  (genre; mood; energy)
+  2. Gym Hero - Max Pulse            score: 2.97  (genre; energy)
+  3. Rooftop Lights - Indigo Parade  score: 1.86  (mood; energy)
+  4. Storm Runner - Voltline         score: 0.99  (energy)
+  5. Neon Warehouse - Pulsewave      score: 0.94  (energy)
+
+====================================================
+  Chill Lofi   (genre=lofi mood=chill energy=0.35)
+====================================================
+  1. Library Rain - Paper Lanterns   score: 4.00  (genre; mood; energy)
+  2. Midnight Coding - LoRoom         score: 3.93  (genre; mood; energy)
+  3. Focus Flow - LoRoom              score: 2.95  (genre; energy)
+  4. Spacewalk Thoughts - Orbit Bloom score: 1.93  (mood; energy)
+  5. Coffee Shop Stories - Slow Stereo score: 0.98 (energy)
+
+====================================================
+  Deep Intense Rock   (genre=rock mood=intense energy=0.9)
+====================================================
+  1. Storm Runner - Voltline         score: 3.99  (genre; mood; energy)
+  2. Gym Hero - Max Pulse            score: 1.97  (mood; energy)
+  3. Neon Warehouse - Pulsewave      score: 0.94  (energy)
+  4. Iron Verdict - Blacklight Forge score: 0.92  (energy)
+  5. Sunrise City - Neon Echo        score: 0.92  (energy)
+
+====================================================
+  Conflicting (loud + sad)   (genre=pop mood=sad energy=0.95)
+====================================================
+  1. Gym Hero - Max Pulse            score: 2.98  (genre; energy)
+  2. Sunrise City - Neon Echo        score: 2.87  (genre; energy)
+  3. Neon Warehouse - Pulsewave      score: 0.99  (energy)
+  4. Iron Verdict - Blacklight Forge score: 0.97  (energy)
+  5. Storm Runner - Voltline         score: 0.96  (energy)
+
+====================================================
+  Impossible (metal + relaxed)   (genre=metal mood=relaxed energy=0.5)
+====================================================
+  1. Iron Verdict - Blacklight Forge score: 2.52  (genre)
+  2. Coffee Shop Stories - Slow Stereo score: 1.87 (mood; energy)
+  3. Paper Moon Dreams - Wisp        score: 1.00  (energy)
+  4. Velvet Hours - Mara Soul        score: 0.95  (energy)
+  5. Dust and Pine - Old Creek Road  score: 0.94  (energy)
+```
+
+### Comparing profiles
+
+- **High-Energy Pop vs Chill Lofi:** These are near opposites and the output confirms the scorer is actually reading the profile, not just returning the same list. Pop pulls loud, upbeat tracks (Sunrise City, Gym Hero) to the top; Lofi pulls slow, mellow tracks (Library Rain, Midnight Coding). Nothing overlaps in the top two. This is the clearest evidence the energy term is doing real work, since both top picks also match on genre and mood.
+- **High-Energy Pop vs Deep Intense Rock:** Same high energy (0.9) but different genre/mood. Gym Hero appears high in both because it is loud and intense, but each list is led by its own genre match (Sunrise City for pop, Storm Runner for rock). This shows genre is the deciding factor when energy is tied, which matches the intended recipe.
+- **Deep Intense Rock vs Conflicting (loud + sad):** Both want high energy, but the rock profile has a real mood match and the conflicting one does not. The conflicting profile's top songs (Gym Hero, Sunrise City) win purely on genre plus energy, and "sad" adds nothing because no song is tagged sad. This makes sense and correctly shows the scorer degrades gracefully rather than crashing on a mood that is missing from the data.
+- **Deep Intense Rock vs Impossible (metal + relaxed):** The rock profile finds a perfect three-way match (Storm Runner). The impossible profile cannot, so its #1 is a metal song that matches genre only, while #2 is a jazz song that matches the relaxed mood and energy. This split top result is the most interesting outcome, because the scorer is torn between two half-matches and neither feels clearly right.
+
+### What surprised me
+
+The "Impossible" profile was the most revealing. A loud metal track (Iron Verdict) ranked #1 for someone asking for *relaxed* music, purely because genre outweighs everything else. That does not match musical intuition at all, and it exposed the genre-over-everything bias described in section 6.
+
+### Data experiment
+
+I doubled the energy weight (1.0 to 2.0) and halved the genre weight (2.0 to 1.0), then re-ran all profiles. For the three normal profiles the top pick did not change, because their #1 song matched genre, mood, and energy all at once. But the "Impossible (metal + relaxed)" profile flipped: its #1 changed from Iron Verdict (metal, loud) to Coffee Shop Stories (relaxed jazz), because energy closeness now outweighed the lone genre match. The change made that specific result feel more accurate, since a relaxed listener probably does want the calm song. It confirmed the system is highly sensitive to the genre weight and that lowering it reduces the filter-bubble effect.
 
 ---
 
 ## 8. Future Work  
 
-Ideas for how you would improve the model next.  
+A few things I would change if I kept going:
 
-Prompts:  
-
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+- Let a genre match count partly for related genres, so a rock fan gets some credit for metal or punk.
+- Use more of the number features I already have, like danceability and valence, instead of just energy.
+- Add diversity to the top 5 so the same artist does not show up twice, and grow the catalog so rare genres have real competition.
 
 ---
 
 ## 9. Personal Reflection  
 
-A few sentences about your experience.  
+My biggest learning moment was seeing that a recommender is really just a scoring rule plus a sort. Once I split "score one song" from "rank all the songs," the whole thing clicked and felt much less mysterious.
 
-Prompts:  
+AI tools helped me move fast. I used them to generate extra songs for the catalog, to talk through how to weight genre against mood, and to write the CSV loading. But I still had to double-check the results, like when a loud metal song ranked first for a "relaxed" user. The AI would happily write working code, but deciding whether the output actually made sense was on me.
 
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+What surprised me most was how something this simple still feels like a real recommendation. There is no machine learning here, just points and a sort, but the reasons it gives make it feel smart. If I extended it, I would fix the genre bias first, since that was the clearest flaw I found.

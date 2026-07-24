@@ -64,6 +64,14 @@ def load_songs(csv_path: str) -> List[Dict]:
     print(f"Loaded songs: {len(songs)}")
     return songs
 
+# Scoring weights. Adjust these to run experiments.
+# Default recipe: genre 2.0, mood 1.0, energy up to 1.0, acoustic 0.5.
+GENRE_WEIGHT = 2.0
+MOOD_WEIGHT = 1.0
+ENERGY_WEIGHT = 1.0
+ACOUSTIC_WEIGHT = 0.5
+
+
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     """Score one song against the user's prefs and return (score, reasons)."""
     score = 0.0
@@ -71,26 +79,26 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
 
     # Genre match: strongest signal.
     if song["genre"] == user_prefs.get("genre"):
-        score += 2.0
+        score += GENRE_WEIGHT
         reasons.append(f"matches your favorite genre ({song['genre']})")
 
     # Mood match: worth half of a genre match.
     if song["mood"] == user_prefs.get("mood"):
-        score += 1.0
+        score += MOOD_WEIGHT
         reasons.append(f"matches your mood ({song['mood']})")
 
-    # Energy closeness: continuous tie-breaker, up to +1.0 for an exact match.
+    # Energy closeness: continuous tie-breaker, up to ENERGY_WEIGHT for an exact match.
     if "energy" in user_prefs:
-        closeness = 1.0 - abs(user_prefs["energy"] - song["energy"])
+        closeness = (1.0 - abs(user_prefs["energy"] - song["energy"])) * ENERGY_WEIGHT
         score += closeness
-        if closeness > 0.8:
+        if closeness > 0.8 * ENERGY_WEIGHT:
             reasons.append("very close to your energy level")
 
     # Acoustic preference: small nudge, only if the profile states one.
     if "likes_acoustic" in user_prefs:
         song_is_acoustic = song["acousticness"] > 0.5
         if song_is_acoustic == user_prefs["likes_acoustic"]:
-            score += 0.5
+            score += ACOUSTIC_WEIGHT
             reasons.append("matches your acoustic preference")
 
     return score, reasons
